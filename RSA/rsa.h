@@ -1,32 +1,7 @@
-// #include <stdio.h>
-// #include <stdint.h>
-// #include <stdlib.h>
-// #include <math.h>
-// #include <time.h>
-// #include <string.h>
-
-
-// struct public_key_class{
-//   long long modulus;
-//   long long exponent;
-// };
-
-// struct private_key_class{
-//   long long modulus;
-//   long long exponent;
-// };
-
-// char *PRIME_SOURCE_FILE = "primes.txt";
-
-// void rsa_gen_keys(struct public_key_class *pub, struct private_key_class *priv, char *PRIME_SOURCE_FILE);
-// long long *rsa_encrypt(const char *message, const unsigned long message_size, const struct public_key_class *pub);
-// char *rsa_decrypt(const long long *message, const unsigned long message_size, const struct private_key_class *pub);
-
-
 #ifndef RSA_H
 #define RSA_H
 
-// #include <stdint.h>
+#include <stdint.h>
 
 // This is the header file for the library librsaencrypt.a
 
