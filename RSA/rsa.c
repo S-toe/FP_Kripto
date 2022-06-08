@@ -186,11 +186,11 @@ void rsa_gen_keys(struct public_key_class * pub, struct private_key_class * priv
 		d = d + phi_pq;
 	}
 
-	pub - > modulus = max;
-	pub - > exponent = e;
+	pub -> modulus = max;
+	pub -> exponent = e;
 
-	priv - > modulus = max;
-	priv - > exponent = d;
+	priv -> modulus = max;
+	priv -> exponent = d;
 }
 
 
@@ -203,7 +203,7 @@ long long * rsa_encrypt(const char * message, const unsigned long message_size, 
 	}
 	long long i = 0;
 	for (i = 0; i < message_size; i++) {
-		if ((encrypted[i] = rsa_modExp(message[i], pub - > exponent, pub - > modulus)) == -1)
+		if ((encrypted[i] = rsa_modExp(message[i], pub-> exponent, pub-> modulus)) == -1)
 			return NULL;
 	}
 	return encrypted;
@@ -230,7 +230,7 @@ char * rsa_decrypt(const long long * message,
 	// Now we go through each 8-byte chunk and decrypt it.
 	long long i = 0;
 	for (i = 0; i < message_size / 8; i++) {
-		if ((temp[i] = rsa_modExp(message[i], priv - > exponent, priv - > modulus)) == -1) {
+		if ((temp[i] = rsa_modExp(message[i], priv-> exponent, priv-> modulus)) == -1) {
 			free(temp);
 			return NULL;
 		}

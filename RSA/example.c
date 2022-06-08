@@ -20,8 +20,13 @@ int main(int argc, char **argv)
   for(i=0; i < strlen(message); i++){
     printf("%lld\n", (long long)message[i]);
   }  
-  
+  // printf("Original:\n");
+  // for(i=0; i < strlen(message); i++){
+  //   printf("%lld", (long long)message[i]);
+  // } 
+  printf("\n");
   long long *encrypted = rsa_encrypt(message, sizeof(message), pub);
+  
   if (!encrypted){
     fprintf(stderr, "Error in encryption!\n");
     return 1;
@@ -30,6 +35,12 @@ int main(int argc, char **argv)
   for(i=0; i < strlen(message); i++){
     printf("%c", encrypted[i]);
   }  
+
+  printf("\nEncrypted:\n");
+  for(i=0; i < strlen(message); i++){
+    printf("%lld ", encrypted[i]);
+  }  
+  printf("\n");
   
   char *decrypted = rsa_decrypt(encrypted, 8*sizeof(message), priv);
   if (!decrypted){
