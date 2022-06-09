@@ -723,10 +723,107 @@ int des_enc(int mode, const char * input, const char * output,unsigned char* key
 	return 0;
 }
 
+int des_dec(int mode, const char * input, const char * output,unsigned char* keyS) {
+	clock_t start, finish;
+	double time_taken;
+	unsigned long file_size;
+	unsigned short int padding;
+
+    unsigned char* des_key = (unsigned char*) malloc(8*sizeof(char));
+	strcpy(des_key,keyS);
+    printf("Key : %s\n",des_key);
+
+
+		short int  process_mode;
+		process_mode = DECRYPTION_MODE;
+		input_file = fopen(input, "rb");
+		if (!input_file) {
+			printf("Could not open input file to read data.");
+			return 1;
+		}else{
+			printf("Oening Input File");
+		}
+
+
+		// Open output file
+		output_file = fopen(output, "wb");
+		if (!output_file) {
+			printf("Could not open output file to write data.");
+			return 1;
+		}
+		else{
+			printf("Oening Output File");
+		}
+
+		// Generate DES key set
+		short int bytes_written;
+		unsigned long block_count = 0, number_of_blocks;
+		unsigned char* data_block = (unsigned char*) malloc(8*sizeof(char));
+		unsigned char* processed_block = (unsigned char*) malloc(8*sizeof(char));
+		key_set* key_sets = (key_set*)malloc(17*sizeof(key_set));
+
+		start = clock();
+		generate_sub_keys(des_key, key_sets);
+		finish = clock();
+		time_taken = (double)(finish - start)/(double)CLOCKS_PER_SEC;
+
+
+		// Get number of blocks in the file
+		fseek(input_file, 0L, SEEK_END);
+		file_size = ftell(input_file);
+
+		fseek(input_file, 0L, SEEK_SET);
+		number_of_blocks = file_size/8 + ((file_size%8)?1:0);
+
+		start = clock();
+		unsigned char* complete_block = (unsigned char*) malloc(100 * 8*sizeof(char));
+
+		// Start reading input file, process and write to output file
+		while(fread(data_block, 1, 8, input_file)) {
+			block_count++;
+			if (block_count == number_of_blocks) {
+				
+				process_message(data_block, processed_block, key_sets, process_mode);
+				padding = processed_block[7];
+				// strncat(complete_block,processed_block,8);
+
+				if (padding < 8) {
+					bytes_written = fwrite(processed_block, 1, 8 - padding, output_file);
+					strncat(complete_block,processed_block,8 - padding);
+				}
+				
+			} else {
+				process_message(data_block, processed_block, key_sets, process_mode);
+				bytes_written = fwrite(processed_block, 1, 8, output_file);
+				strncat(complete_block,processed_block,8);
+			}
+			
+			memset(data_block, 0, 8);
+		}
+		printf("\n%s",complete_block);
+		finish = clock();
+
+		// Free up memory
+		free(des_key);
+		free(data_block);
+		free(processed_block);
+		free(complete_block);
+		fclose(input_file);
+		fclose(output_file);
+
+		// Provide feedback
+		time_taken = (double)(finish - start)/(double)CLOCKS_PER_SEC;
+		printf("Finished processing Time taken: %lf seconds.\n", time_taken);
+		return 0;
+	
+
+	return 0;
+}
+
 int main(){
 	// writeData();
-	des_enc(1,"asset.csv",".asset.csv","12345678");
-	// des(0,"data","temp.dec","key");
+	// des_enc(1,"asset.csv",".asset.csv","12345678");
+	des_dec(0,"asset.csv","temp.dec","12345678");
 	// des_enc("asset.csv","asset2.csv",(unsigned char*)"12345678");
 
 }
