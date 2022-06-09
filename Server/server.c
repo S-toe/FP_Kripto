@@ -18,8 +18,12 @@ struct Akun
        {
               char name[50];
               char passwd[50];
-              struct public_key_class pub;
-              struct private_key_class priv;
+            //   struct public_key_class pub[1];
+            //   struct private_key_class priv[1];
+            long long pe;
+            long long pm;
+            long long pre;
+            long long prm;
        };
 
 struct player
@@ -71,7 +75,8 @@ void *client(void *tmp){
                 
                 // char *buffer = "login success";
                 char *buffer=(char*)malloc( 100* sizeof(char));
-                sprintf(buffer, "login success|%lld|%lld|%lld|%lld", akun.pub.exponent,akun.pub.modulus,akun.priv.exponent,akun.priv.modulus);
+                sprintf(buffer, "login success|%lld|%lld|%lld|%lld", akun2.pe,akun2.pm,akun2.pre,akun2.prm);
+                printf("%s",buffer);
                 send(new_socket , buffer , strlen(buffer) , 0 );
                 flag=1;
                 break;
@@ -221,42 +226,52 @@ void *client(void *tmp){
     }
 
 }
-void createPlayerData(const char* username,const char* password){
+void createPlayerData(){
     struct Akun akun;
-    FILE *fp, *fp2;
-    struct public_key_class pub;
-    struct private_key_class priv;
+    FILE *fpr, *fpw2;
+    struct public_key_class* pub;
+    struct private_key_class* priv;
     //Buat Private Key dan Public Key dahulu
 
-    // char* username = "player1";
-    // char* password = "12345678";
-    rsa_gen_keys(&pub, &priv, PRIME_SOURCE_FILE);
-    
+    char* username = "player1";
+    char* password = "password";
+    // rsa_gen_keys(pub, priv, PRIME_SOURCE_FILE);
+    // printf ("Pub Ori mod= %lld exp = %lld ", (long long)pub->modulus, (long long)pub->exponent);
+    // printf ("Priv Ori mod= %lld exp = %lld\n\n", (long long)priv->modulus, (long long)priv->exponent);
     strcpy(akun.name,username);
     strcpy(akun.passwd,password);
-    akun.pub=pub;
-    akun.priv=priv;
+    akun.pe=(long long)131073;
+    akun.pm=(long long)3662065633;
+    akun.pre=(long long)555073537;
+    akun.prm=(long long)3662065633;
+    // printf ("Pub Ori mod= %lld exp = %lld ", (long long)akun.pm, (long long)akun.pe);
+    // printf ("Priv Ori mod= %lld exp = %lld\n\n", (long long)akun.prm, (long long)akun.pre);
+    // akun.pub=pub;
+    // akun.pub.exponent=pub->exponent;
+    // akun.priv.modulus=priv->modulus;
+    // akun.priv=priv;
     // valread = read( new_socket , akun.name, 1024);
     // valread = read( new_socket , akun.passwd, 1024);
-    fp2 = fopen("akuntest.txt","a+");
-    fwrite(&akun,sizeof(akun),1,fp2);
-    fclose(fp2);
+   
+    fpw2 = fopen("akun.txt","w");
+    fwrite(&akun,sizeof(struct Akun),1,fpw2);
+    fclose(fpw2);
 
-    fp = fopen("akuntest.txt","r");
-    while(fread(&akun, sizeof(struct Akun), 1, fp)) 
+    fpr = fopen("akun.txt","r");
+    while(fread(&akun, sizeof(struct Akun), 1, fpr)) 
         printf ("username = %s password = %s ", akun.name, akun.passwd);
-        printf ("Pub mod= %lld exp = %lld ", akun.pub.modulus, akun.pub.exponent);
-        printf ("Priv mod= %lld exp = %lld\n\n", akun.priv.modulus, akun.priv.exponent);
-    fclose(fp);
+        printf ("Pub Ori mod= %lld exp = %lld ", (long long)akun.pm, (long long)akun.pe);
+        printf ("Priv Ori mod= %lld exp = %lld\n\n", (long long)akun.prm, (long long)akun.pre);
+    fclose(fpr);
         
 }
 
 int main(int argc, char const *argv[]) {
 
-    // if (argc==3){
-    //     createPlayerData(argv[1],argv[2]);
-    //     return 0;
-    // }
+    if (argc==3){
+        createPlayerData();
+        return 0;
+    }
     FILE *fp, *fp2, *fp3;
     struct Akun akun,akun2;
     int server_fd, new_socket, valread;

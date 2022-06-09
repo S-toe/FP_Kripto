@@ -9,11 +9,14 @@ int main(int argc, char **argv)
   struct private_key_class priv[1];
   //Buat Private Key dan Public Key dahulu
   rsa_gen_keys(pub, priv, PRIME_SOURCE_FILE);
-
+  // pub->exponent=9126805504;
+  // pub->modulus=65536;
+  // priv->exponent=109877395456;
+  // priv->modulus=110058536960;
   printf("Private Key:\n Modulus: %lld\n Exponent: %lld\n", (long long)priv->modulus, (long long) priv->exponent);
   printf("Public Key:\n Modulus: %lld\n Exponent: %lld\n", (long long)pub->modulus, (long long) pub->exponent);
   
-  char message[] = "ABCDEXFG";
+  char message[] = "12345678";
   int i;
 
   printf("Original:\n");

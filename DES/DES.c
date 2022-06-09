@@ -616,9 +616,117 @@ int des(int mode, const char * input, const char * output,const char * key) {
 	return 0;
 }
 
+
+int des_enc(int mode, const char * input, const char * output,unsigned char* keyS) {
+	clock_t start, finish;
+	double time_taken;
+	unsigned long file_size;
+	unsigned short int padding;
+
+    unsigned char* des_key = (unsigned char*) malloc(8*sizeof(char));
+	strcpy(des_key,keyS);
+    printf("Key : %s\n",des_key);
+
+
+		short int  process_mode;
+		process_mode = ENCRYPTION_MODE;
+		
+		input_file = fopen(input, "rb");
+		if (!input_file) {
+			printf("Could not open input file to read data.");
+			return 1;
+		}else{
+			printf("Oening Input File");
+		}
+		// Open output file
+		output_file = fopen(output, "wb");
+		if (!output_file) {
+			printf("Could not open output file to write data.");
+			return 1;
+		}
+		else{
+			printf("Oening Output File");
+		}
+		// Generate DES key set
+		short int bytes_written;
+		unsigned long block_count = 0, number_of_blocks;
+		unsigned char* data_block = (unsigned char*) malloc(8*sizeof(char));
+		unsigned char* processed_block = (unsigned char*) malloc(8*sizeof(char));
+		key_set* key_sets = (key_set*)malloc(17*sizeof(key_set));
+
+		start = clock();
+		generate_sub_keys(des_key, key_sets);
+		finish = clock();
+		time_taken = (double)(finish - start)/(double)CLOCKS_PER_SEC;
+		// process_mode=ENCRYPTION_MODE;
+		// Determine process mode
+		// Get number of blocks in the file
+		fseek(input_file, 0L, SEEK_END);
+		file_size = ftell(input_file);
+
+		fseek(input_file, 0L, SEEK_SET);
+		number_of_blocks = file_size/8 + ((file_size%8)?1:0);
+
+		start = clock();
+
+		// Start reading input file, process and write to output file
+		while(fread(data_block, 1, 8, input_file)) {
+			block_count++;
+			if (block_count == number_of_blocks) {
+				if (process_mode == ENCRYPTION_MODE) {
+					padding = 8 - file_size%8;
+					if (padding < 8) { // Fill empty data block bytes with padding
+						memset((data_block + 8 - padding), (unsigned char)padding, padding);
+					}
+
+					process_message(data_block, processed_block, key_sets, process_mode);
+					bytes_written = fwrite(processed_block, 1, 8, output_file);
+
+					if (padding == 8) { // Write an extra block for padding
+						memset(data_block, (unsigned char)padding, 8);
+						process_message(data_block, processed_block, key_sets, process_mode);
+						bytes_written = fwrite(processed_block, 1, 8, output_file);
+					}
+				}
+			} else {
+				process_message(data_block, processed_block, key_sets, process_mode);
+				bytes_written = fwrite(processed_block, 1, 8, output_file);
+			}
+			memset(data_block, 0, 8);
+		}
+
+		finish = clock();
+
+		// Free up memory
+		free(des_key);
+		free(data_block);
+		free(processed_block);
+		fclose(input_file);
+		fclose(output_file);
+
+		// Provide feedback
+		time_taken = (double)(finish - start)/(double)CLOCKS_PER_SEC;
+		printf("Finished processing Time taken: %lf seconds.\n", time_taken);
+		
+		if (remove(input) == 0)
+			printf("Deleted successfully");
+		else
+			printf("Unable to delete the file");
+		if (rename(output, input) == 0) {
+			printf("The file is renamed successfully.");
+		} else {
+			printf("The file could not be renamed.");
+		}
+		return 0;
+	
+
+	return 0;
+}
+
 int main(){
-	writeData();
-	des(1,"temp","data","key");
-	des(0,"data","temp.dec","key");
+	// writeData();
+	des_enc(1,"asset.csv",".asset.csv","12345678");
+	// des(0,"data","temp.dec","key");
+	// des_enc("asset.csv","asset2.csv",(unsigned char*)"12345678");
 
 }

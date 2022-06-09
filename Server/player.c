@@ -8,8 +8,10 @@
 #include <ctype.h>
 #include <termios.h>
 #include <pthread.h>
+
 #include "../RSA/rsa.h"
 #include "../DES/des.h"
+
 #define PORT 8090
 
 // static struct termios stored;
@@ -133,6 +135,197 @@ void readasset()
     //free(buf);
     fclose(asset);
 }
+void encasset()
+{
+    /* FileStream for the Library File */
+    FILE *asset;
+
+    /* allocation of the buffer for every line in the File */
+    char *buf = malloc(MAX_STR_LEN);
+    char *tmp; 
+
+    /* if the space could not be allocaed, return an error */
+    if (buf == NULL) {
+        printf ("No memory\n");
+    }
+
+    if ( ( asset = fopen( "asset.csv", "r" ) ) == NULL ) //Reading a file
+    {
+        printf( "File could not be opened.\n" );
+    }
+
+    int i = 0;
+    while (fgets(buf, 255, asset) != NULL)
+    {
+        if ((strlen(buf)>0) && (buf[strlen (buf) - 1] == '\n'))
+            buf[strlen (buf) - 1] = '\0';       
+
+        
+        tmp = strtok(buf, ",");
+        sprintf(player.healt, "%d", atoi(tmp));
+
+        tmp = strtok(NULL, ",");
+        sprintf(player.attack, "%d", atoi(tmp));
+
+        if (i==0){
+            i++;
+            continue;
+        }
+        printf("player.health= %s  player.attack: %s\n",player.healt,player.attack);
+
+    }
+    //free(buf);
+    fclose(asset);
+}
+
+void enckeyforDES(struct public_key_class* pubk, struct private_key_class* privk)
+{
+    /* FileStream for the Library File */
+    FILE *key;
+
+    /* allocation of the buffer for every line in the File */
+    char *buf = malloc(MAX_STR_LEN);
+    char *tmp; 
+    // rsa_gen_keys(pubk, privk, PRIME_SOURCE_FILE);
+    /* if the space could not be allocaed, return an error */
+    if (buf == NULL) {
+        printf ("No memory\n");
+    }
+
+    if ( ( key = fopen( "key", "r" ) ) == NULL ) //Reading a file
+    {
+        printf( "File could not be opened.\n" );
+    }
+
+    int i = 0;
+    while (fgets(buf, 255, key) != NULL)
+    {
+        if ((strlen(buf)>0) && (buf[strlen (buf) - 1] == '\n'))
+            buf[strlen (buf) - 1] = '\0';       
+
+        printf("Key %s\n",buf);
+
+    }
+    //free(buf);
+    fclose(key);
+    // printf("Original:\n");
+    // for(i=0; i < strlen(buf); i++){
+    //     printf("%c", buf[i]);
+    // }  
+    // printf("\nOriginal:\n");
+    // for(i=0; i < strlen(buf); i++){
+    //     printf("%lld-", (long long)buf[i]);
+    // } 
+    // printf("-\n");
+    long long *encrypted = rsa_encrypt(buf, sizeof(buf), pubk);
+    // printf("Enc : %s\n",encrypted);
+    
+    if (!encrypted){
+        fprintf(stderr, "Error in encryption!\n");
+        // return 1;
+    }
+    // printf("\nEncrypted:\n");
+    // for(i=0; i < strlen(buf); i++){
+    //     printf("%c", (char)encrypted[i]);
+    // }  
+
+    // printf("\nEncrypted:\n");
+    // for(i=0; i < strlen(buf); i++){
+    //     printf("%lld ", encrypted[i]);
+    // }  
+    // char *decrypted = rsa_decrypt(encrypted, 8*sizeof(buf), privk);
+    // if (!decrypted){
+    //     fprintf(stderr, "Error in decryption!\n");
+    //     // return 1;
+    // }
+    // printf("\nDecrypted:\n");
+    // for(i=0; i < strlen(buf); i++){
+    //     printf("%c", decrypted[i]);
+    // }  
+    
+    // printf("\n");
+   
+    char * encrypted_string=malloc(8*MAX_STR_LEN);
+    sprintf(encrypted_string,"%lld %lld %lld %lld %lld %lld %lld %lld\n",encrypted[0],encrypted[1],encrypted[2],encrypted[3],encrypted[4],encrypted[5],encrypted[6],encrypted[7]);
+
+    FILE* fptr;
+	fptr = fopen("key","w");
+
+	if(fptr == NULL)
+	{
+		printf("Error!");   
+		exit(1);             
+	}
+
+	fprintf(fptr,"%s",encrypted_string);
+	fclose(fptr);
+    free(encrypted);
+    // free(decrypted);
+}
+
+char* readkeyforDES(struct public_key_class* pubk, struct private_key_class* privk)
+{
+    /* FileStream for the Library File */
+    FILE *key;
+
+    /* allocation of the buffer for every line in the File */
+    char *buf = malloc(MAX_STR_LEN);
+    char *tmp; 
+    // rsa_gen_keys(pubk, privk, PRIME_SOURCE_FILE);
+    /* if the space could not be allocaed, return an error */
+    if (buf == NULL) {
+        printf ("No memory\n");
+    }
+
+    if ( ( key = fopen( "key", "r" ) ) == NULL ) //Reading a file
+    {
+        printf( "File could not be opened.\n" );
+    }
+
+    int i = 0;
+    while (fgets(buf, 255, key) != NULL)
+    {
+        if ((strlen(buf)>0) && (buf[strlen (buf) - 1] == '\n'))
+            buf[strlen (buf) - 1] = '\0';       
+
+        printf("Key %s\n",buf);
+
+    }
+    //free(buf);
+    fclose(key);
+    char *token;
+    long long encryptedkey[9];
+    token = strtok(buf, " ");
+    encryptedkey[0]=atoll(token);
+    token = strtok(NULL, " ");
+    encryptedkey[1]=atoll(token);
+    token = strtok(NULL, " ");
+    encryptedkey[2]=atoll(token);
+    token = strtok(NULL, " ");
+    encryptedkey[3]=atoll(token);
+    token = strtok(NULL, " ");
+    encryptedkey[4]=atoll(token);
+    token = strtok(NULL, " ");
+    encryptedkey[5]=atoll(token);
+    token = strtok(NULL, " ");
+    encryptedkey[6]=atoll(token);
+    token = strtok(NULL, " ");
+    encryptedkey[7]=atoll(token);
+
+    char *decrypted = rsa_decrypt(encryptedkey, 8*sizeof(buf), privk);
+    if (!decrypted){
+        fprintf(stderr, "Error in decryption!\n");
+        // return 1;
+    }
+ 
+    printf("\nDecrypted:\n");
+    for(i=0; i < 8; i++){
+        printf("%c", decrypted[i]);
+    } 
+    return decrypted;
+}
+
+// char ** split()
 
 int main(int argc, char const *argv[]) {
     struct sockaddr_in address;
@@ -148,10 +341,7 @@ int main(int argc, char const *argv[]) {
     char health[1024];
     char attack[1024];
 
-    //read asset and store to variable
-    readasset();
-    *health=*player.healt;
-    *attack=*player.attack;
+
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         printf("\n Socket creation error \n");
@@ -189,7 +379,9 @@ int main(int argc, char const *argv[]) {
             scanf("%[^\n]", &*passwd);
             send(sock , passwd , 1024 , 0 );
             memset(buffer, 0, sizeof buffer);
+            
             valread = read( sock , buffer, 1024);
+            
             printf("%s\n",buffer );
             char* tempstring=malloc(strlen(buffer)+1);
             strcpy(tempstring, buffer);
@@ -198,14 +390,39 @@ int main(int argc, char const *argv[]) {
             char* pub_m;
             char* priv_e;
             char* priv_m;
-            response = strtok(tempstring, "|");
-            pub_e = strtok(tempstring, "|");
-            pub_m = strtok(tempstring, "|");
-            priv_e = strtok(tempstring, "|");
-            priv_m = strtok(tempstring, "|");
+            // long long int pub_e;
+            // long long int pub_m;
+            // long long int priv_e;
+            // long long int priv_m;
 
+            struct public_key_class pubm;
+            struct private_key_class prvm;
+
+            response = strtok(tempstring, "|");
+            pub_e = strtok(NULL, "|");
+            pub_m = strtok(NULL, "|");
+            priv_e = strtok(NULL, "|");
+            priv_m = strtok(NULL, "|");
+            // pubm.exponent = atoll(strtok(NULL, "|"));
+            // pubm.modulus = atoll(strtok(NULL, "|"));
+            // prvm.exponent = atoll(strtok(NULL, "|"));
+            // prvm.modulus = atoll(strtok(NULL, "|"));
+            pubm.exponent = atoll(pub_e);
+            pubm.modulus = atoll(pub_m);
+            prvm.exponent = atoll(priv_e);;
+            prvm.modulus = atoll(priv_m);;
+            printf("%s %lld %lld %lld %lld\n",response,pubm.exponent, pubm.modulus,prvm.exponent,prvm.modulus);
             if(!stringcmp(response,"login success")){
-                printf("%s %s %s %s %s",response,pub_e,pub_m,priv_e,priv_m);
+                // printf("%s %lld %lld %lld %lld\n",response,pub_e,pub_m,priv_e,priv_m);
+                
+                char * desKey=readkeyforDES(&pubm,&prvm);
+                
+                //read asset and store to variable
+                
+                readasset(desKey);
+                *health=*player.healt;
+                *attack=*player.attack;
+
                 send(sock , player.healt , strlen(player.healt) , 0 );
                 sleep(1);
                 send(sock , player.attack , strlen(player.attack) , 0 );
