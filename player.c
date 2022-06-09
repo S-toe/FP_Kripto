@@ -45,30 +45,7 @@ void reset_keypress(void)
     return;
 }
 
-// void set_keypress(void)
-// {
-//     struct termios new;
-
-//     tcgetattr(0,&stored);
-
-//     memcpy(&new,&stored,sizeof(struct termios));
-
-//     /* Disable canonical mode, and set buffer size to 1 byte */
-//     new.c_lflag &= (~ICANON);
-//     new.c_cc[VTIME] = 0;
-//     new.c_cc[VMIN] = 1;
-
-//     tcsetattr(0,TCSANOW,&new);
-//     return;
-// }
-
-// void reset_keypress(void)
-// {
-//     tcsetattr(0,TCSANOW,&stored);
-//     return;
-// }
-
-
+//compare input
 int stringcmp (char *s1,char *s2)
 {
     int i=0,diff=0;
@@ -82,6 +59,7 @@ int stringcmp (char *s1,char *s2)
     return 0;
 }
 
+//check player win or not
 void *cekhasil( void *ptr )
 {
     char buffer[1024];
@@ -89,20 +67,19 @@ void *cekhasil( void *ptr )
         valread = read(sock, buffer, 1024);
         printf("%s\n",buffer);
         if(!strcmp(buffer, "win")) {
+            system("clear");
             printf("Game berakhir kamu menang\n");
             status = 2;
             break;
         }
 
         if(!strcmp(buffer, "dead")) {
+            system("clear");
             printf("Game berakhir kamu kalah\n");
             send(sock , "dead" , strlen("dead"), 0 );
             status = -1;
             break;
         }
-        // printf("%d\n",status);
-        // sleep(1);
-        // printf("buffer ini : %s\n", buffer);
 
         memset(buffer, 0, sizeof(buffer));
     }
@@ -111,6 +88,7 @@ void *cekhasil( void *ptr )
     return NULL;
 }
 
+//read asset player health and attack
 void readasset()
 {
     /* FileStream for the Library File */
@@ -167,9 +145,8 @@ int main(int argc, char const *argv[]) {
     char buffer[1024] = {0};
     char health[1024];
     char attack[1024];
-    
-    // printf ("health = %d\n", player1.health);
 
+    //read asset and store to variable
     readasset();
     *health=*player.healt;
     *attack=*player.attack;
@@ -195,129 +172,126 @@ int main(int argc, char const *argv[]) {
     }
 
     while(1){
+        //player choice menu
         printf("1.Login\n2.Register\nChoice : ");
         scanf("%s",&*kata);
         if(!stringcmp(kata,login)){
-             send(sock , login , strlen(login) , 0 );
-            // send(sock , hello , strlen(hello) , 0 );
+            
+            send(sock , login , strlen(login) , 0 );
             printf("Username : ");
-            // scanf("%s",&*usrname);
             scanf("%c", &temp);
             scanf("%[^\n]", &*usrname); 
             send(sock , usrname , 1024 , 0 );
             printf("Password : ");
-            // scanf("%s",&*passwd);
             scanf("%c", &temp);
             scanf("%[^\n]", &*passwd);
             send(sock , passwd , 1024 , 0 );
             memset(buffer, 0, sizeof buffer);
             valread = read( sock , buffer, 1024);
-            // char *buffer="cuk";
             printf("%s\n",buffer );
             if(!stringcmp(buffer,"login success")){
-            send(sock , player.healt , strlen(player.healt) , 0 );
-            sleep(1);
-            send(sock , player.attack , strlen(player.attack) , 0 );
-            printf("waiting for player %s\n",player.healt);
-            // read(sock,kata,1024);
-            // printf("dari server%s\n",kata );
-            while (1){
-                printf("1.Find Match\n2.Logout\nChoice : ");
-                scanf("%s",&*kata);
-                if(!stringcmp(kata,"logout")){
-                    send(sock , kata , 1024 , 0 );
-                    break;
-                }
-                else if(!stringcmp(kata,"find")){
-                    send(sock , kata , 1024 , 0 );
-                    
-                    // printf("waiting for player %d\n",*health);
-                    // printf("send kata %d\n",*health);
-                    while(!stringcmp(kata,"find")){
-                    read(sock,kata,1024);
-                    printf("waiting for player\n");
-                    
+                send(sock , player.healt , strlen(player.healt) , 0 );
+                sleep(1);
+                send(sock , player.attack , strlen(player.attack) , 0 );
+                printf("waiting for player %s\n",player.healt);
+
+                //choice after login
+                while (1){
+                    printf("1.Find Match\n2.Logout\nChoice : ");
+                    scanf("%s",&*kata);
+                    if(!stringcmp(kata,"logout")){
+                        send(sock , kata , 1024 , 0 );
+                        break;
                     }
-                    char msg[1024];
-                    read(sock, msg ,1024 );
-                    sleep(2);
-                    system("clear");
-                    printf("%s\n",msg);
-                    sleep(2);
-                    printf("Game dimulai silahkan tap tap -space- secepat mungkin dalam\n");
-                    printf("3\n");
-                    sleep(1);
-                    printf("2\n");
-                    sleep(1);
-                    printf("1\n");
-                    
-                    sleep(1);
+                    //player search opponent
+                    else if(!stringcmp(kata,"find")){
+                        send(sock , kata , 1024 , 0 );
 
-                    status = 1;
+                        //loop until find opponent
+                        while(!stringcmp(kata,"find")){
+                        read(sock,kata,1024);
+                        printf("waiting for player\n");
 
-                    int iret = pthread_create(&thread,NULL,&cekhasil,NULL);
+                        }
 
-                    if(iret)
-                    {
-                        fprintf(stderr,"Error - pthread_create() return code: %d\n",iret);
-                        exit(EXIT_FAILURE);
-                    }
+                        //the game
+                        char msg[1024];
+                        read(sock, msg ,1024 );
+                        sleep(2);
+                        system("clear");
+                        printf("%s\n",msg);
+                        sleep(2);
+                        printf("Game dimulai silahkan tap tap -space- secepat mungkin dalam\n");
+                        printf("3\n");
+                        sleep(1);
+                        printf("2\n");
+                        sleep(1);
+                        printf("1\n");
 
-                    set_keypress();
-                    // printf("sebelum masuk while\n");
-                    // char text[10];
-                    // valread = read(sock, text, 10);
-                    // printf("%s\n",text);
-                    // printf("tetet\n");
+                        sleep(1);
 
-                    while (status == 1)
-                    {
-                        if(status != 1) break;
-                        // printf("status:%d\n",status);
-                        char c = getc(stdin);
-                        if(status == 2) break;
-                        if(c == 32) {
+                        status = 1;
 
-                            // printf("dalam 32\n");
-                            if(status != 2){
-                                send(sock , "hit" , strlen("hit"), 0 );
-                                printf("hit !!\n");
+                        int iret = pthread_create(&thread,NULL,&cekhasil,NULL);
+
+                        if(iret)
+                        {
+                            fprintf(stderr,"Error - pthread_create() return code: %d\n",iret);
+                            exit(EXIT_FAILURE);
+                        }
+
+                        set_keypress();
+
+                        while (status == 1)
+                        {
+                            if(status != 1) break;
+                            // printf("status:%d\n",status);
+                            char c = getc(stdin);
+                            if(status == 2) break;
+                            if(c == 32) {
+
+                                // send hit to server
+                                if(status != 2){
+                                    send(sock , "hit" , strlen("hit"), 0 );
+                                    printf("hit !!\n");
+                                }
                             }
                         }
+                        status = 0;
+
+                        reset_keypress();
+
+
                     }
-                    status = 0;
-                    
-                    reset_keypress();
-
-
                 }
-            }
             
             }
             
             memset(buffer, 0, sizeof buffer);
         }
+
         if(!stringcmp(kata,regist)){
-            send(sock , regist , strlen(regist) , 0 );
-            printf("register\n");
-            printf("Username : ");
-            // scanf("%s",&*usrname);
-            scanf("%c", &temp);
-            scanf("%[^\n]", &*usrname); 
-            // fgets(usrname,1024,stdin);
-            send(sock , usrname , 1024 , 0 );
-            printf("Password : ");
-            // scanf("%s",&*passwd);
-            scanf("%c", &temp);
-            // fgets(passwd,1024,stdin);
-            scanf("%[^\n]", &*passwd); 
-            printf("register success\n");
-            send(sock , passwd , 1024 , 0 );
-            // valread = read( sock , buffer, 1024);
-            // printf("%s\n",buffer );
-            // memset(buffer, 0, sizeof buffer);
-            // memset(usrname, 0, sizeof buffer);
-            // memset(passwd, 0, sizeof buffer);
+            // send(sock , regist , strlen(regist) , 0 );
+            printf("sorry, no service :(...\n");
+            // printf("register\n");
+            // printf("Username : ");
+            // // scanf("%s",&*usrname);
+            // scanf("%c", &temp);
+            // scanf("%[^\n]", &*usrname); 
+            // // fgets(usrname,1024,stdin);
+            // send(sock , usrname , 1024 , 0 );
+            // printf("Password : ");
+            // // scanf("%s",&*passwd);
+            // scanf("%c", &temp);
+            // // fgets(passwd,1024,stdin);
+            // scanf("%[^\n]", &*passwd); 
+            // printf("register success\n");
+            // send(sock , passwd , 1024 , 0 );
+            // // valread = read( sock , buffer, 1024);
+            // // printf("%s\n",buffer );
+            // // memset(buffer, 0, sizeof buffer);
+            // // memset(usrname, 0, sizeof buffer);
+            // // memset(passwd, 0, sizeof buffer);
         }
     }
     return 0;
