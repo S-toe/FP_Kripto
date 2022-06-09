@@ -318,15 +318,70 @@ char* readkeyforDES(struct public_key_class* pubk, struct private_key_class* pri
         // return 1;
     }
  
-    printf("\nDecrypted:\n");
-    for(i=0; i < 8; i++){
-        printf("%c", decrypted[i]);
-    } 
+    // printf("\nDecrypted:\n");
+    // for(i=0; i < 8; i++){
+    //     printf("%c", decrypted[i]);
+    // } 
     return decrypted;
 }
 
 // char ** split()
+ void readasset_enc()
+{
+    char * data=des_dec_to_s("asset.csv","12345678");
+    printf("%s\n", data);
+    char *tmp,*line1,*line2;
+    char delimit[1] = {'\n'};
+    line1 = strtok(data, delimit);
+    line2 = strtok(NULL, delimit);
 
+    tmp = strtok(line2, ",");
+    printf("HP %s\n", tmp);
+    sprintf(player.healt, "%s", tmp);
+    tmp = strtok(NULL, ",");
+    printf("ATT %s\n", tmp);
+    sprintf(player.attack, "%s", tmp);
+    printf("player.health= %s  player.attack: %s\n",player.healt,player.attack);
+    // /* FileStream for the Library File */
+    // FILE *asset;
+
+    // /* allocation of the buffer for every line in the File */
+    // char *buf = malloc(MAX_STR_LEN);
+    // char *tmp; 
+
+    // /* if the space could not be allocaed, return an error */
+    // if (buf == NULL) {
+    //     printf ("No memory\n");
+    // }
+
+    // if ( ( asset = fopen( "asset.csv", "r" ) ) == NULL ) //Reading a file
+    // {
+    //     printf( "File could not be opened.\n" );
+    // }
+
+    // int i = 0;
+    // while (fgets(buf, 255, asset) != NULL)
+    // {
+    //     if ((strlen(buf)>0) && (buf[strlen (buf) - 1] == '\n'))
+    //         buf[strlen (buf) - 1] = '\0';       
+
+        
+    //     tmp = strtok(buf, ",");
+    //     sprintf(player.healt, "%d", atoi(tmp));
+
+    //     tmp = strtok(NULL, ",");
+    //     sprintf(player.attack, "%d", atoi(tmp));
+
+    //     if (i==0){
+    //         i++;
+    //         continue;
+    //     }
+    //     printf("player.health= %s  player.attack: %s\n",player.healt,player.attack);
+
+    // }
+    // //free(buf);
+    // fclose(asset);
+}
 int main(int argc, char const *argv[]) {
     struct sockaddr_in address;
     struct sockaddr_in serv_addr;
@@ -419,9 +474,11 @@ int main(int argc, char const *argv[]) {
                 
                 //read asset and store to variable
                 
-                readasset(desKey);
+                // readasset();
+                readasset_enc();
                 *health=*player.healt;
                 *attack=*player.attack;
+                printf("Your Health is %s and your power is %s\n",player.healt,player.attack);
 
                 send(sock , player.healt , strlen(player.healt) , 0 );
                 sleep(1);
