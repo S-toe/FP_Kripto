@@ -326,9 +326,9 @@ char* readkeyforDES(struct public_key_class* pubk, struct private_key_class* pri
 }
 
 // char ** split()
- void readasset_enc()
+ void readasset_enc(char * deskey)
 {
-    char * data=des_dec_to_s("asset.csv","12345678");
+    char * data=des_dec_to_s("asset.csv",deskey);
     printf("%s\n", data);
     char *tmp,*line1,*line2;
     char delimit[1] = {'\n'};
@@ -475,7 +475,7 @@ int main(int argc, char const *argv[]) {
                 //read asset and store to variable
                 
                 // readasset();
-                readasset_enc();
+                readasset_enc(desKey);
                 *health=*player.healt;
                 *attack=*player.attack;
                 printf("Your Health is %s and your power is %s\n",player.healt,player.attack);
