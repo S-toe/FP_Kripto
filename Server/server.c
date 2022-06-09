@@ -68,7 +68,10 @@ void *client(void *tmp){
 
             while(fread(&akun2, sizeof(struct Akun), 1, fp3)){
                 if(strcmp(akun.name,akun2.name)==0 && strcmp(akun.passwd,akun2.passwd)==0){
-                char *buffer = "login success";
+                
+                // char *buffer = "login success";
+                char *buffer=(char*)malloc( 100* sizeof(char));
+                sprintf(buffer, "login success|%lld|%lld|%lld|%lld", akun.pub.exponent,akun.pub.modulus,akun.priv.exponent,akun.priv.modulus);
                 send(new_socket , buffer , strlen(buffer) , 0 );
                 flag=1;
                 break;
@@ -78,7 +81,7 @@ void *client(void *tmp){
             if (flag==0){
                 printf("Auth Failed\n");
 
-                char *buffer = "login failed";
+                char *buffer = "login failed|0|0|0|0";
                 send(new_socket , buffer , strlen(buffer) , 0 );
             }
             //player already login

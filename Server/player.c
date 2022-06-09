@@ -9,6 +9,7 @@
 #include <termios.h>
 #include <pthread.h>
 #include "../RSA/rsa.h"
+#include "../DES/des.h"
 #define PORT 8090
 
 // static struct termios stored;
@@ -190,7 +191,21 @@ int main(int argc, char const *argv[]) {
             memset(buffer, 0, sizeof buffer);
             valread = read( sock , buffer, 1024);
             printf("%s\n",buffer );
-            if(!stringcmp(buffer,"login success")){
+            char* tempstring=malloc(strlen(buffer)+1);
+            strcpy(tempstring, buffer);
+            char* response;
+            char* pub_e;
+            char* pub_m;
+            char* priv_e;
+            char* priv_m;
+            response = strtok(tempstring, "|");
+            pub_e = strtok(tempstring, "|");
+            pub_m = strtok(tempstring, "|");
+            priv_e = strtok(tempstring, "|");
+            priv_m = strtok(tempstring, "|");
+
+            if(!stringcmp(response,"login success")){
+                printf("%s %s %s %s %s",response,pub_e,pub_m,priv_e,priv_m);
                 send(sock , player.healt , strlen(player.healt) , 0 );
                 sleep(1);
                 send(sock , player.attack , strlen(player.attack) , 0 );
