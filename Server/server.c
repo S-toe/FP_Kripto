@@ -5,8 +5,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include<pthread.h>
-#define PORT 8080
+#include <pthread.h>
+#include "../RSA/rsa.h"
+#define PORT 8090
 
 pthread_t tid[3000];
 int find;
@@ -17,6 +18,8 @@ struct Akun
        {
               char name[50];
               char passwd[50];
+              struct public_key_class pub;
+              struct private_key_class priv;
        };
 
 struct player
@@ -215,8 +218,42 @@ void *client(void *tmp){
     }
 
 }
+void createPlayerData(const char* username,const char* password){
+    struct Akun akun;
+    FILE *fp, *fp2;
+    struct public_key_class pub;
+    struct private_key_class priv;
+    //Buat Private Key dan Public Key dahulu
+
+    // char* username = "player1";
+    // char* password = "12345678";
+    rsa_gen_keys(&pub, &priv, PRIME_SOURCE_FILE);
+    
+    strcpy(akun.name,username);
+    strcpy(akun.passwd,password);
+    akun.pub=pub;
+    akun.priv=priv;
+    // valread = read( new_socket , akun.name, 1024);
+    // valread = read( new_socket , akun.passwd, 1024);
+    fp2 = fopen("akuntest.txt","a+");
+    fwrite(&akun,sizeof(akun),1,fp2);
+    fclose(fp2);
+
+    fp = fopen("akuntest.txt","r");
+    while(fread(&akun, sizeof(struct Akun), 1, fp)) 
+        printf ("username = %s password = %s ", akun.name, akun.passwd);
+        printf ("Pub mod= %lld exp = %lld ", akun.pub.modulus, akun.pub.exponent);
+        printf ("Priv mod= %lld exp = %lld\n\n", akun.priv.modulus, akun.priv.exponent);
+    fclose(fp);
+        
+}
 
 int main(int argc, char const *argv[]) {
+
+    // if (argc==3){
+    //     createPlayerData(argv[1],argv[2]);
+    //     return 0;
+    // }
     FILE *fp, *fp2, *fp3;
     struct Akun akun,akun2;
     int server_fd, new_socket, valread;

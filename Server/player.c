@@ -8,7 +8,8 @@
 #include <ctype.h>
 #include <termios.h>
 #include <pthread.h>
-#define PORT 8080
+#include "../RSA/rsa.h"
+#define PORT 8090
 
 // static struct termios stored;
 int sock = 0, valread;
