@@ -110,8 +110,7 @@ long long rsa_modExp(long long b, long long e, long long m) {
 	}
 	return product;
 }
-// Calling this function will generate a public and private key and store them in the pointers
-// it is given.
+
 void rsa_gen_keys(struct public_key_class * pub, struct private_key_class * priv, char * PRIME_SOURCE_FILE) {
 	// bilangan prima di definiiskan pada sebuah file
 	FILE * primes_list;
@@ -151,8 +150,8 @@ void rsa_gen_keys(struct public_key_class * pub, struct private_key_class * priv
 	srand(time(NULL));
 
 	do {
-		// a dan b adalah posisi p dan q pada list
 		// Pilih dua buah bilangan prima sembarang, p dan q.
+		// a dan b adalah posisi p dan q pada list
 		int a = (double) rand() * (prime_count + 1) / (RAND_MAX + 1.0);
 		int b = (double) rand() * (prime_count + 1) / (RAND_MAX + 1.0);
 
@@ -173,25 +172,20 @@ void rsa_gen_keys(struct public_key_class * pub, struct private_key_class * priv
 		}
 		q = atol(prime_buffer);
 
-		// nilai n adalah p*q
 		// Hitung n = p × q 
 		max = p * q;
-		// phi(pq)=(p−1)(q−1)
 		// Hitung Ф(n) = (p – 1)(q – 1). 
 		phi_pq = (p - 1) * (q - 1);
 
-		// 2 integer dikatanan relatif prima jika gcd terbesar nya adalah 1
+		// 2 integer dikatanan coprima jika gcd terbesar nya adalah 1
 	}
 	while (!(p && q) || (p == q) || (gcd(phi_pq, e) != 1));
 
-
-
-	// hitung private key dengan modular inverse d
 	// Bangkitkan kunci privat dengan menggunakan persamaan
 	// ed = 1 (mod phi(n))
 	// gcd(e,phi(n))=1 karena harus coprima
-	// ex+phi(n)y=1 -->  17x+40y=1
-	// apply euclidean algorithm ex =1 (mod phi(n))
+	// ex+phi(n)y=1
+
 	d = ExtendedEuclidean(phi_pq, e);
 	while (d < 0) {
 		d = d + phi_pq;
@@ -230,8 +224,7 @@ char * rsa_decrypt(const long long * message,
 			"Error: message_size is not divisible by %d, so cannot be output of rsa_encrypt\n", (int) sizeof(long long));
 		return NULL;
 	}
-	// We allocate space to do the decryption (temp) and space for the output as a char array
-	// (decrypted)
+
 	char * decrypted = malloc(message_size / sizeof(long long));
 	char * temp = malloc(message_size);
 	if ((decrypted == NULL) || (temp == NULL)) {
@@ -239,7 +232,7 @@ char * rsa_decrypt(const long long * message,
 			"Error: Heap allocation failed.\n");
 		return NULL;
 	}
-	// Now we go through each 8-byte chunk and decrypt it.
+
 	long long i = 0;
 	for (i = 0; i < message_size / 8; i++) {
 		// Dekripsi dilakukan dengan m1 = c1^d mod m

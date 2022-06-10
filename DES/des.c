@@ -6,14 +6,9 @@
 #define DECRYPTION_MODE 0
 #define DES_KEY_SIZE 8
 static FILE *key_file, *input_file, *output_file;
-typedef struct {
-	unsigned char k[8];
-	unsigned char c[4];
-	unsigned char d[4];
-} key_set;
 
+#include "des.h"
 
-// #include "des.h"
 void generate_key(unsigned char* key);
 void generate_sub_keys(unsigned char* main_key, key_set* key_sets);
 void process_message(unsigned char* message_piece, unsigned char* processed_piece, key_set* key_sets, int mode);
@@ -166,24 +161,26 @@ void generate_sub_keys(unsigned char* main_key, key_set* key_sets) {
 	for (i=0; i<8; i++) {
 		key_sets[0].k[i] = 0;
 	}
+
 	// Mengacak urutan bit-key menggunakan table PC-1/initial_key_permutaion sebagai panduan pengacakan)
 	for (i=0; i<56; i++) {
 		shift_size = initial_key_permutaion[i];
 		shift_byte = 0x80 >> ((shift_size - 1)%8);
 		shift_byte &= main_key[(shift_size - 1)/8];
 		shift_byte <<= ((shift_size - 1)%8);
+		
 
 		key_sets[0].k[i/8] |= (shift_byte >> i%8);
 	}
 	
 	// 56-bit key dibagi dua sama besar menjadi bagian kiri (28 bit pertama) dan kanan (28 bit kedua) 
-
+	// C0
 	for (i=0; i<3; i++) {
 		key_sets[0].c[i] = key_sets[0].k[i];
 	}
 
 	key_sets[0].c[3] = key_sets[0].k[3] & 0xF0;
-
+	// D0
 	for (i=0; i<3; i++) {
 		key_sets[0].d[i] = (key_sets[0].k[i+3] & 0x0F) << 4;
 		key_sets[0].d[i] |= (key_sets[0].k[i+4] & 0xF0) >> 4;
@@ -240,6 +237,7 @@ void generate_sub_keys(unsigned char* main_key, key_set* key_sets) {
 
 		key_sets[i].d[3] <<= shift_size;
 		key_sets[i].d[3] |= (first_shift_bits >> (4 - shift_size));
+
 		// Bit-bit pada CnDn dikonversikan menggunakan tabel PC-2 sehingga menghasilkan subkey dengan Panjang 48-bit
 		for (j=0; j<48; j++) {
 			shift_size = sub_key_permutation[j];
@@ -276,6 +274,7 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 
 		initial_permutation[i/8] |= (shift_byte >> i%8);
 	}
+
 	// Hasil IP menjadi dua bagian sama besar, bagian kiri L0 (32 bit pertama) dan bagian kanan R0 (32 bit kedua)
 	unsigned char l[4], r[4];
 	for (i=0; i<4; i++) {
@@ -287,10 +286,13 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 
 	int key_index;
 	for (k=1; k<=16; k++) {
+		// Ln = Rn-1
 		memcpy(ln, r, 4);
 
+		// Menghitung Rn = Ln-1 + f(Rn-1,Kn)
+		// Rn-1 di ekspansi menjadi 48 bits agar bisa di xor dengan K disimbolkan er
 		memset(er, 0, 6);
-		// E bit expansion untuk Rn
+		// E bit expansion untuk mencari Rn-1 48 bits
 		for (i=0; i<48; i++) {
 			shift_size = message_expansion[i];
 			shift_byte = 0x80 >> ((shift_size - 1)%8);
@@ -305,13 +307,13 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 		} else {
 			key_index = k;
 		}
-
+		// Menghitung f(Rn-1,Kn) Rn-1 xor Kn
 		for (i=0; i<6; i++) {
 			er[i] ^= key_sets[key_index].k[i];
 		}
 
 		unsigned char row, column;
-
+		// Mengambalikan er menjad 32 bits dengan S Box Expansion
 		for (i=0; i<4; i++) {
 			ser[i] = 0;
 		}
@@ -401,8 +403,8 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 			rn[i] = 0;
 		}
 
+		// Output S-Box dipermutasi table P menghasilkan f(Rn-1,Kn)
 		for (i=0; i<32; i++) {
-			// Output S-Box
 			shift_size = right_sub_message_permutation[i];
 			shift_byte = 0x80 >> ((shift_size - 1)%8);
 			shift_byte &= ser[(shift_size - 1)/8];
@@ -410,25 +412,26 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 
 			rn[i/8] |= (shift_byte >> i%8);
 		}
-
+		// L0 xor f(R0 , K1 )
 		for (i=0; i<4; i++) {
 			rn[i] ^= l[i];
 		}
 
 		for (i=0; i<4; i++) {
+			// Hasil Ln dan Rn
 			l[i] = ln[i];
 			r[i] = rn[i];
 		}
 	}
-
+	// Gabungkan RnLn
 	unsigned char pre_end_permutation[8];
 	for (i=0; i<4; i++) {
 		pre_end_permutation[i] = r[i];
 		pre_end_permutation[4+i] = l[i];
 	}
-
+	// Permutasi dengan table IP -1 untuk mendapatkan text hasil
 	for (i=0; i<64; i++) {
-		// IP -1
+		
 		shift_size = final_message_permutation[i];
 		shift_byte = 0x80 >> ((shift_size - 1)%8);
 		shift_byte &= pre_end_permutation[(shift_size - 1)/8];
@@ -458,19 +461,16 @@ void generate_key_file(const char *key){
 			printf("Error writing key to output file.");
 			fclose(key_file);
 			free(des_key);
-			// return 1;
 		}
 
 		free(des_key);
 		fclose(key_file);
-        // return des_key;
 }
 
 unsigned char* read_key(const char* key){
     key_file = fopen(key, "rb");
     if (!key_file) {
         printf("Could not open key file to read key.");
-        // return 1;
     }
 
     short int bytes_read;
@@ -481,7 +481,6 @@ unsigned char* read_key(const char* key){
     if (bytes_read != DES_KEY_SIZE) {
         printf("Key read from key file does nto have valid key size.");
         fclose(key_file);
-        // return 1;
     }
     fclose(key_file);
     return des_key;
@@ -509,7 +508,6 @@ int des(int mode, const char * input, const char * output,const char * key) {
 	unsigned short int padding;
 
     unsigned char* des_key = (unsigned char*) malloc(8*sizeof(char));
-    // generate_key_file();
     des_key = read_key(key);
     printf("Key : %s\n",des_key);
 
@@ -518,12 +516,8 @@ int des(int mode, const char * input, const char * output,const char * key) {
 
 		if (mode==ENCRYPTION_MODE) {
 			process_mode = ENCRYPTION_MODE;
-			// input_file = fopen("temp", "rb");
-			// output_file = fopen("data.enc", "wb");
 		} else {
 			process_mode = DECRYPTION_MODE;
-			// input_file = fopen("date.enc", "rb");
-			// output_file = fopen("temp.dec", "wb");
 		}
 		input_file = fopen(input, "rb");
 		if (!input_file) {
@@ -555,8 +549,7 @@ int des(int mode, const char * input, const char * output,const char * key) {
 		generate_sub_keys(des_key, key_sets);
 		finish = clock();
 		time_taken = (double)(finish - start)/(double)CLOCKS_PER_SEC;
-		// process_mode=ENCRYPTION_MODE;
-		// Determine process mode
+
 
 
 		// Get number of blocks in the file
@@ -639,7 +632,7 @@ int des_enc(const char * input, const char * output,unsigned char* keyS) {
 			printf("Could not open input file to read data.");
 			return 1;
 		}else{
-			printf("Oening Input File");
+			printf("Opening Input File");
 		}
 		// Open output file
 		output_file = fopen(output, "wb");
@@ -648,8 +641,9 @@ int des_enc(const char * input, const char * output,unsigned char* keyS) {
 			return 1;
 		}
 		else{
-			printf("Oening Output File");
+			printf("Opening Output File");
 		}
+
 		// Generate DES key set
 		short int bytes_written;
 		unsigned long block_count = 0, number_of_blocks;
@@ -661,9 +655,6 @@ int des_enc(const char * input, const char * output,unsigned char* keyS) {
 		generate_sub_keys(des_key, key_sets);
 		finish = clock();
 		time_taken = (double)(finish - start)/(double)CLOCKS_PER_SEC;
-		// process_mode=ENCRYPTION_MODE;
-		// Determine process mode
-		// Get number of blocks in the file
 		fseek(input_file, 0L, SEEK_END);
 		file_size = ftell(input_file);
 
@@ -709,7 +700,6 @@ int des_enc(const char * input, const char * output,unsigned char* keyS) {
 
 		// Provide feedback
 		time_taken = (double)(finish - start)/(double)CLOCKS_PER_SEC;
-		printf("Finished processing Time taken: %lf seconds.\n", time_taken);
 		
 		if (remove(input) == 0)
 			printf("Deleted successfully");
@@ -781,14 +771,12 @@ int des_dec(const char * input, const char * output,unsigned char* keyS) {
 		start = clock();
 		unsigned char* complete_block = (unsigned char*) malloc(100 * 8*sizeof(char));
 
-		// Start reading input file, process and write to output file
 		while(fread(data_block, 1, 8, input_file)) {
 			block_count++;
 			if (block_count == number_of_blocks) {
 				
 				process_message(data_block, processed_block, key_sets, process_mode);
 				padding = processed_block[7];
-				// strncat(complete_block,processed_block,8);
 
 				if (padding < 8) {
 					bytes_written = fwrite(processed_block, 1, 8 - padding, output_file);
@@ -870,8 +858,6 @@ char* des_dec_to_s(const char * input,unsigned char* keyS) {
 			
 			memset(data_block, 0, 8);
 		}
-		// printf("\n%s",complete_block);
-		// Free up memory
 		free(des_key);
 		free(data_block);
 		free(processed_block);
@@ -887,4 +873,8 @@ char* des_dec_to_s(const char * input,unsigned char* keyS) {
 // 	//des_dec("asset.csv","temp.dec","12345678");
 // 	// des_enc("asset.csv",".asset.csv",(unsigned char*)"12345678");
 
+// }
+
+// int main(){
+// 	des_dec_to_s("test.csv","12345678");
 // }
