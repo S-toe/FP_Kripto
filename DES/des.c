@@ -877,10 +877,11 @@ char* des_dec_to_s(const char * input,unsigned char* keyS) {
 	return complete_block;
 }
 
-// int main(){
+// int main(int argc, char const *argv[]){
 // 	// writeData();
-// 	// des_enc(1,"asset.csv",".asset.csv","12345678");
-// 	des_dec("asset.csv","temp.dec","12345678");
+// 	des_enc(argv[1],argv[2],(unsigned char*)argv[3]);
+// 	// des_enc(1,"p4.csv",".asset.csv","12345678");
+// 	//des_dec("asset.csv","temp.dec","12345678");
 // 	// des_enc("asset.csv",".asset.csv",(unsigned char*)"12345678");
 
 // }

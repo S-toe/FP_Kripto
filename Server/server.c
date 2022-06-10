@@ -15,23 +15,21 @@ int darah1,darah2,darahtmp;
 int att1,att2,atttmp;
 
 struct Akun
-       {
-              char name[50];
-              char passwd[50];
-            //   struct public_key_class pub[1];
-            //   struct private_key_class priv[1];
-            long long pe;
-            long long pm;
-            long long pre;
-            long long prm;
-       };
+{
+    char name[50];
+    char passwd[50];
+    long long pe;
+    long long pm;
+    long long pre;
+    long long prm;
+};
 
 struct player
-       {
-              int id;
-              int health;
-              int attack;
-       };
+{
+        int id;
+        int health;
+        int attack;
+};
 
 int stringcmp (char *s1,char *s2)
 {
@@ -235,23 +233,12 @@ void createPlayerData(){
 
     char* username = "player1";
     char* password = "password";
-    // rsa_gen_keys(pub, priv, PRIME_SOURCE_FILE);
-    // printf ("Pub Ori mod= %lld exp = %lld ", (long long)pub->modulus, (long long)pub->exponent);
-    // printf ("Priv Ori mod= %lld exp = %lld\n\n", (long long)priv->modulus, (long long)priv->exponent);
     strcpy(akun.name,username);
     strcpy(akun.passwd,password);
     akun.pe=(long long)131073;
     akun.pm=(long long)3662065633;
     akun.pre=(long long)555073537;
     akun.prm=(long long)3662065633;
-    // printf ("Pub Ori mod= %lld exp = %lld ", (long long)akun.pm, (long long)akun.pe);
-    // printf ("Priv Ori mod= %lld exp = %lld\n\n", (long long)akun.prm, (long long)akun.pre);
-    // akun.pub=pub;
-    // akun.pub.exponent=pub->exponent;
-    // akun.priv.modulus=priv->modulus;
-    // akun.priv=priv;
-    // valread = read( new_socket , akun.name, 1024);
-    // valread = read( new_socket , akun.passwd, 1024);
    
     fpw2 = fopen("akun.txt","w");
     fwrite(&akun,sizeof(struct Akun),1,fpw2);

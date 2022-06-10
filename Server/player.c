@@ -95,56 +95,10 @@ void *cekhasil( void *ptr )
 //read asset player health and attack
 void readasset()
 {
-    /* FileStream for the Library File */
     FILE *asset;
 
-    /* allocation of the buffer for every line in the File */
     char *buf = malloc(MAX_STR_LEN);
     char *tmp; 
-
-    /* if the space could not be allocaed, return an error */
-    if (buf == NULL) {
-        printf ("No memory\n");
-    }
-
-    if ( ( asset = fopen( "asset.csv", "r" ) ) == NULL ) //Reading a file
-    {
-        printf( "File could not be opened.\n" );
-    }
-
-    int i = 0;
-    while (fgets(buf, 255, asset) != NULL)
-    {
-        if ((strlen(buf)>0) && (buf[strlen (buf) - 1] == '\n'))
-            buf[strlen (buf) - 1] = '\0';       
-
-        
-        tmp = strtok(buf, ",");
-        sprintf(player.healt, "%d", atoi(tmp));
-
-        tmp = strtok(NULL, ",");
-        sprintf(player.attack, "%d", atoi(tmp));
-
-        if (i==0){
-            i++;
-            continue;
-        }
-        printf("player.health= %s  player.attack: %s\n",player.healt,player.attack);
-
-    }
-    //free(buf);
-    fclose(asset);
-}
-void encasset()
-{
-    /* FileStream for the Library File */
-    FILE *asset;
-
-    /* allocation of the buffer for every line in the File */
-    char *buf = malloc(MAX_STR_LEN);
-    char *tmp; 
-
-    /* if the space could not be allocaed, return an error */
     if (buf == NULL) {
         printf ("No memory\n");
     }
@@ -180,14 +134,11 @@ void encasset()
 
 void enckeyforDES(struct public_key_class* pubk, struct private_key_class* privk)
 {
-    /* FileStream for the Library File */
-    FILE *key;
 
-    /* allocation of the buffer for every line in the File */
+    FILE *key;
     char *buf = malloc(MAX_STR_LEN);
-    char *tmp; 
-    // rsa_gen_keys(pubk, privk, PRIME_SOURCE_FILE);
-    /* if the space could not be allocaed, return an error */
+    char *tmp;
+
     if (buf == NULL) {
         printf ("No memory\n");
     }
@@ -202,48 +153,15 @@ void enckeyforDES(struct public_key_class* pubk, struct private_key_class* privk
     {
         if ((strlen(buf)>0) && (buf[strlen (buf) - 1] == '\n'))
             buf[strlen (buf) - 1] = '\0';       
-
-        printf("Key %s\n",buf);
-
     }
-    //free(buf);
+
     fclose(key);
-    // printf("Original:\n");
-    // for(i=0; i < strlen(buf); i++){
-    //     printf("%c", buf[i]);
-    // }  
-    // printf("\nOriginal:\n");
-    // for(i=0; i < strlen(buf); i++){
-    //     printf("%lld-", (long long)buf[i]);
-    // } 
-    // printf("-\n");
+
     long long *encrypted = rsa_encrypt(buf, sizeof(buf), pubk);
-    // printf("Enc : %s\n",encrypted);
-    
+
     if (!encrypted){
         fprintf(stderr, "Error in encryption!\n");
-        // return 1;
     }
-    // printf("\nEncrypted:\n");
-    // for(i=0; i < strlen(buf); i++){
-    //     printf("%c", (char)encrypted[i]);
-    // }  
-
-    // printf("\nEncrypted:\n");
-    // for(i=0; i < strlen(buf); i++){
-    //     printf("%lld ", encrypted[i]);
-    // }  
-    // char *decrypted = rsa_decrypt(encrypted, 8*sizeof(buf), privk);
-    // if (!decrypted){
-    //     fprintf(stderr, "Error in decryption!\n");
-    //     // return 1;
-    // }
-    // printf("\nDecrypted:\n");
-    // for(i=0; i < strlen(buf); i++){
-    //     printf("%c", decrypted[i]);
-    // }  
-    
-    // printf("\n");
    
     char * encrypted_string=malloc(8*MAX_STR_LEN);
     sprintf(encrypted_string,"%lld %lld %lld %lld %lld %lld %lld %lld\n",encrypted[0],encrypted[1],encrypted[2],encrypted[3],encrypted[4],encrypted[5],encrypted[6],encrypted[7]);
@@ -260,23 +178,20 @@ void enckeyforDES(struct public_key_class* pubk, struct private_key_class* privk
 	fprintf(fptr,"%s",encrypted_string);
 	fclose(fptr);
     free(encrypted);
-    // free(decrypted);
 }
 
 char* readkeyforDES(struct public_key_class* pubk, struct private_key_class* privk)
 {
-    /* FileStream for the Library File */
     FILE *key;
 
-    /* allocation of the buffer for every line in the File */
     char *buf = malloc(MAX_STR_LEN);
     char *tmp; 
+    
     // rsa_gen_keys(pubk, privk, PRIME_SOURCE_FILE);
-    /* if the space could not be allocaed, return an error */
+    
     if (buf == NULL) {
         printf ("No memory\n");
     }
-
     if ( ( key = fopen( "key", "r" ) ) == NULL ) //Reading a file
     {
         printf( "File could not be opened.\n" );
@@ -287,8 +202,6 @@ char* readkeyforDES(struct public_key_class* pubk, struct private_key_class* pri
     {
         if ((strlen(buf)>0) && (buf[strlen (buf) - 1] == '\n'))
             buf[strlen (buf) - 1] = '\0';       
-
-        printf("Key %s\n",buf);
 
     }
     //free(buf);
@@ -315,17 +228,12 @@ char* readkeyforDES(struct public_key_class* pubk, struct private_key_class* pri
     char *decrypted = rsa_decrypt(encryptedkey, 8*sizeof(buf), privk);
     if (!decrypted){
         fprintf(stderr, "Error in decryption!\n");
-        // return 1;
     }
  
-    // printf("\nDecrypted:\n");
-    // for(i=0; i < 8; i++){
-    //     printf("%c", decrypted[i]);
-    // } 
     return decrypted;
 }
 
-// char ** split()
+
  void readasset_enc(char * deskey)
 {
     char * data=des_dec_to_s("asset.csv",deskey);
@@ -342,47 +250,10 @@ char* readkeyforDES(struct public_key_class* pubk, struct private_key_class* pri
     printf("ATT %s\n", tmp);
     sprintf(player.attack, "%s", tmp);
     printf("player.health= %s  player.attack: %s\n",player.healt,player.attack);
-    // /* FileStream for the Library File */
-    // FILE *asset;
-
-    // /* allocation of the buffer for every line in the File */
-    // char *buf = malloc(MAX_STR_LEN);
-    // char *tmp; 
-
-    // /* if the space could not be allocaed, return an error */
-    // if (buf == NULL) {
-    //     printf ("No memory\n");
-    // }
-
-    // if ( ( asset = fopen( "asset.csv", "r" ) ) == NULL ) //Reading a file
-    // {
-    //     printf( "File could not be opened.\n" );
-    // }
-
-    // int i = 0;
-    // while (fgets(buf, 255, asset) != NULL)
-    // {
-    //     if ((strlen(buf)>0) && (buf[strlen (buf) - 1] == '\n'))
-    //         buf[strlen (buf) - 1] = '\0';       
-
-        
-    //     tmp = strtok(buf, ",");
-    //     sprintf(player.healt, "%d", atoi(tmp));
-
-    //     tmp = strtok(NULL, ",");
-    //     sprintf(player.attack, "%d", atoi(tmp));
-
-    //     if (i==0){
-    //         i++;
-    //         continue;
-    //     }
-    //     printf("player.health= %s  player.attack: %s\n",player.healt,player.attack);
-
-    // }
-    // //free(buf);
-    // fclose(asset);
 }
 int main(int argc, char const *argv[]) {
+    
+
     struct sockaddr_in address;
     struct sockaddr_in serv_addr;
     char hello[1025];
@@ -445,10 +316,6 @@ int main(int argc, char const *argv[]) {
             char* pub_m;
             char* priv_e;
             char* priv_m;
-            // long long int pub_e;
-            // long long int pub_m;
-            // long long int priv_e;
-            // long long int priv_m;
 
             struct public_key_class pubm;
             struct private_key_class prvm;
@@ -458,26 +325,28 @@ int main(int argc, char const *argv[]) {
             pub_m = strtok(NULL, "|");
             priv_e = strtok(NULL, "|");
             priv_m = strtok(NULL, "|");
-            // pubm.exponent = atoll(strtok(NULL, "|"));
-            // pubm.modulus = atoll(strtok(NULL, "|"));
-            // prvm.exponent = atoll(strtok(NULL, "|"));
-            // prvm.modulus = atoll(strtok(NULL, "|"));
             pubm.exponent = atoll(pub_e);
             pubm.modulus = atoll(pub_m);
             prvm.exponent = atoll(priv_e);;
             prvm.modulus = atoll(priv_m);;
-            printf("%s %lld %lld %lld %lld\n",response,pubm.exponent, pubm.modulus,prvm.exponent,prvm.modulus);
+            if(argc==2){
+                enckeyforDES(&pubm,&prvm);
+                return 0;
+            }
             if(!stringcmp(response,"login success")){
-                // printf("%s %lld %lld %lld %lld\n",response,pub_e,pub_m,priv_e,priv_m);
+                
+                // printf("%s %lld %lld %lld %lld\n",response,pubm.exponent, pubm.modulus,prvm.exponent,prvm.modulus);
                 
                 char * desKey=readkeyforDES(&pubm,&prvm);
                 
                 //read asset and store to variable
-                
                 // readasset();
+
                 readasset_enc(desKey);
+                
                 *health=*player.healt;
                 *attack=*player.attack;
+                
                 printf("Your Health is %s and your power is %s\n",player.healt,player.attack);
 
                 send(sock , player.healt , strlen(player.healt) , 0 );
@@ -561,27 +430,7 @@ int main(int argc, char const *argv[]) {
         }
 
         if(!stringcmp(kata,regist)){
-            // send(sock , regist , strlen(regist) , 0 );
             printf("sorry, no service :(...\n");
-            // printf("register\n");
-            // printf("Username : ");
-            // // scanf("%s",&*usrname);
-            // scanf("%c", &temp);
-            // scanf("%[^\n]", &*usrname); 
-            // // fgets(usrname,1024,stdin);
-            // send(sock , usrname , 1024 , 0 );
-            // printf("Password : ");
-            // // scanf("%s",&*passwd);
-            // scanf("%c", &temp);
-            // // fgets(passwd,1024,stdin);
-            // scanf("%[^\n]", &*passwd); 
-            // printf("register success\n");
-            // send(sock , passwd , 1024 , 0 );
-            // // valread = read( sock , buffer, 1024);
-            // // printf("%s\n",buffer );
-            // // memset(buffer, 0, sizeof buffer);
-            // // memset(usrname, 0, sizeof buffer);
-            // // memset(passwd, 0, sizeof buffer);
         }
     }
     return 0;
