@@ -166,7 +166,7 @@ void generate_sub_keys(unsigned char* main_key, key_set* key_sets) {
 	for (i=0; i<8; i++) {
 		key_sets[0].k[i] = 0;
 	}
-
+	// Mengacak urutan bit-key menggunakan table PC-1/initial_key_permutaion sebagai panduan pengacakan)
 	for (i=0; i<56; i++) {
 		shift_size = initial_key_permutaion[i];
 		shift_byte = 0x80 >> ((shift_size - 1)%8);
@@ -175,6 +175,8 @@ void generate_sub_keys(unsigned char* main_key, key_set* key_sets) {
 
 		key_sets[0].k[i/8] |= (shift_byte >> i%8);
 	}
+	
+	// 56-bit key dibagi dua sama besar menjadi bagian kiri (28 bit pertama) dan kanan (28 bit kedua) 
 
 	for (i=0; i<3; i++) {
 		key_sets[0].c[i] = key_sets[0].k[i];
@@ -189,7 +191,7 @@ void generate_sub_keys(unsigned char* main_key, key_set* key_sets) {
 
 	key_sets[0].d[3] = (key_sets[0].k[6] & 0x0F) << 4;
 
-
+	// C1 dan D1 diperoleh dengan menggeser 1 bit dari C0 dan D0 ke kiri. C2 dan D2 diperoleh dengan menggeser 1 bit dari C1 dan D1 ke kiri
 	for (i=1; i<17; i++) {
 		for (j=0; j<4; j++) {
 			key_sets[i].c[j] = key_sets[i-1].c[j];
@@ -238,7 +240,7 @@ void generate_sub_keys(unsigned char* main_key, key_set* key_sets) {
 
 		key_sets[i].d[3] <<= shift_size;
 		key_sets[i].d[3] |= (first_shift_bits >> (4 - shift_size));
-
+		// Bit-bit pada CnDn dikonversikan menggunakan tabel PC-2 sehingga menghasilkan subkey dengan Panjang 48-bit
 		for (j=0; j<48; j++) {
 			shift_size = sub_key_permutation[j];
 			if (shift_size <= 28) {
@@ -265,6 +267,7 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 	memset(initial_permutation, 0, 8);
 	memset(processed_piece, 0, 8);
 
+	// Pesan teks dikenakan Initial Permutation (IP)
 	for (i=0; i<64; i++) {
 		shift_size = initial_message_permutation[i];
 		shift_byte = 0x80 >> ((shift_size - 1)%8);
@@ -273,7 +276,7 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 
 		initial_permutation[i/8] |= (shift_byte >> i%8);
 	}
-
+	// Hasil IP menjadi dua bagian sama besar, bagian kiri L0 (32 bit pertama) dan bagian kanan R0 (32 bit kedua)
 	unsigned char l[4], r[4];
 	for (i=0; i<4; i++) {
 		l[i] = initial_permutation[i];
@@ -287,7 +290,7 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 		memcpy(ln, r, 4);
 
 		memset(er, 0, 6);
-
+		// E bit expansion untuk Rn
 		for (i=0; i<48; i++) {
 			shift_size = message_expansion[i];
 			shift_byte = 0x80 >> ((shift_size - 1)%8);
@@ -313,9 +316,7 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 			ser[i] = 0;
 		}
 
-		// 0000 0000 0000 0000 0000 0000
-		// rccc crrc cccr rccc crrc cccr
-
+		// SBox Expansion 
 		// Byte 1
 		row = 0;
 		row |= ((er[0] & 0x80) >> 6);
@@ -401,6 +402,7 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 		}
 
 		for (i=0; i<32; i++) {
+			// Output S-Box
 			shift_size = right_sub_message_permutation[i];
 			shift_byte = 0x80 >> ((shift_size - 1)%8);
 			shift_byte &= ser[(shift_size - 1)/8];
@@ -426,6 +428,7 @@ void process_message(unsigned char* message_piece, unsigned char* processed_piec
 	}
 
 	for (i=0; i<64; i++) {
+		// IP -1
 		shift_size = final_message_permutation[i];
 		shift_byte = 0x80 >> ((shift_size - 1)%8);
 		shift_byte &= pre_end_permutation[(shift_size - 1)/8];

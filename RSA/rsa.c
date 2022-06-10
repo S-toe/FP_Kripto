@@ -94,6 +94,7 @@ static inline long long modmult(long long a, long long b, long long mod) {
 	return sum;
 }
 long long rsa_modExp(long long b, long long e, long long m) {
+	// product = b^e mod m
 	long long product;
 	product = 1;
 	if (b < 0 || e < 0 || m <= 0) {
@@ -138,6 +139,8 @@ void rsa_gen_keys(struct public_key_class * pub, struct private_key_class * priv
 
 
 	// memilih bilangan e yang relatif prima untuk phi(pq)). Dalam praktiknya, e sering dipilih menjadi 2^{16}+1=655372
+	// Pilih kunci publik, e, yang relatif prima terhadap Ф(n).
+
 	long long e = (2 << 16) + 1;
 
 	long long d = 0;
@@ -149,6 +152,7 @@ void rsa_gen_keys(struct public_key_class * pub, struct private_key_class * priv
 
 	do {
 		// a dan b adalah posisi p dan q pada list
+		// Pilih dua buah bilangan prima sembarang, p dan q.
 		int a = (double) rand() * (prime_count + 1) / (RAND_MAX + 1.0);
 		int b = (double) rand() * (prime_count + 1) / (RAND_MAX + 1.0);
 
@@ -170,8 +174,10 @@ void rsa_gen_keys(struct public_key_class * pub, struct private_key_class * priv
 		q = atol(prime_buffer);
 
 		// nilai n adalah p*q
+		// Hitung n = p × q 
 		max = p * q;
 		// phi(pq)=(p−1)(q−1)
+		// Hitung Ф(n) = (p – 1)(q – 1). 
 		phi_pq = (p - 1) * (q - 1);
 
 		// 2 integer dikatanan relatif prima jika gcd terbesar nya adalah 1
@@ -181,6 +187,11 @@ void rsa_gen_keys(struct public_key_class * pub, struct private_key_class * priv
 
 
 	// hitung private key dengan modular inverse d
+	// Bangkitkan kunci privat dengan menggunakan persamaan
+	// ed = 1 (mod phi(n))
+	// gcd(e,phi(n))=1 karena harus coprima
+	// ex+phi(n)y=1 -->  17x+40y=1
+	// apply euclidean algorithm ex =1 (mod phi(n))
 	d = ExtendedEuclidean(phi_pq, e);
 	while (d < 0) {
 		d = d + phi_pq;
@@ -203,6 +214,7 @@ long long * rsa_encrypt(const char * message, const unsigned long message_size, 
 	}
 	long long i = 0;
 	for (i = 0; i < message_size; i++) {
+		// Enkripsi dilakukan dengan c1 = m1^e mod m
 		if ((encrypted[i] = rsa_modExp(message[i], pub-> exponent, pub-> modulus)) == -1)
 			return NULL;
 	}
@@ -230,6 +242,7 @@ char * rsa_decrypt(const long long * message,
 	// Now we go through each 8-byte chunk and decrypt it.
 	long long i = 0;
 	for (i = 0; i < message_size / 8; i++) {
+		// Dekripsi dilakukan dengan m1 = c1^d mod m
 		if ((temp[i] = rsa_modExp(message[i], priv-> exponent, priv-> modulus)) == -1) {
 			free(temp);
 			return NULL;
